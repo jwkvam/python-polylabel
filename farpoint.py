@@ -5,7 +5,6 @@ from math import sqrt, inf
 from itertools import count
 from queue import PriorityQueue
 
-import numpy as np
 from shapely.geometry import Point, LineString
 
 
@@ -44,35 +43,6 @@ def _point_to_polygon_distance(x, y, polygon):
     if not inside:
         return -min_dist
     return min_dist
-
-
-def _get_seg_dist_sq(point: Point, segment: LineString):
-    """Squared distance from point to a segment."""
-    return segment.distance(point)
-
-
-def _get_seg_dist_sq2(px, py, a, b):
-    """Squared distance from point to a segment."""
-    x = a[0]
-    y = a[1]
-    dx = b[0] - x
-    dy = b[1] - y
-
-    if dx != 0 or dy != 0:
-        t = ((px - x) * dx + (py - y) * dy) / (dx * dx + dy * dy)
-
-        if t > 1:
-            x = b[0]
-            y = b[1]
-
-        elif t > 0:
-            x += dx * t
-            y += dy * t
-
-    dx = px - x
-    dy = py - y
-
-    return dx * dx + dy * dy
 
 
 class _Cell:
