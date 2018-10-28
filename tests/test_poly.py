@@ -1,3 +1,4 @@
+"""Tests on various polygons."""
 import json
 from pathlib import Path
 

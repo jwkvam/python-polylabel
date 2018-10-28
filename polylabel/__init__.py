@@ -1,3 +1,4 @@
+"""Farpoint module."""
 from typing import Tuple
 import logging
 from math import sqrt, inf
@@ -5,13 +6,15 @@ from itertools import count
 from queue import PriorityQueue
 from shapely.geometry import Point, LineString
 
-# Counter is used as tie breaker for the priority queue if Cells have same priority
-counter = count()
+__version__ = 0.4
+
+# _counter is used as tie breaker for the priority queue if Cells have same priority
+_counter = count()
 
 
 
-def frange(x, y, jump):
-    """Range, but for floating point numbers"""
+def ffrange(x, y, jump):
+    """range, but for floating point numbers"""
     while x < y:
         yield x
         x += jump
@@ -124,10 +127,10 @@ def polylabel(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, floa
         return Point(min_x, min_y), 0
 
     # cover polygon with initial cells
-    for x in frange(min_x, max_x, cell_size):
-        for y in frange(min_y, max_y, cell_size):
+    for x in ffrange(min_x, max_x, cell_size):
+        for y in ffrange(min_y, max_y, cell_size):
             c = Cell(x + h, y + h, h, polygon)
-            cell_queue.put((-c.max, next(counter), c))
+            cell_queue.put((-c.max, next(_counter), c))
 
     best_cell = _get_centroid_cell(polygon)
 
@@ -153,13 +156,13 @@ def polylabel(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, floa
 
         h = cell.h / 2
         c = Cell(cell.x - h, cell.y - h, h, polygon)
-        cell_queue.put((-c.max, next(counter), c))
+        cell_queue.put((-c.max, next(_counter), c))
         c = Cell(cell.x + h, cell.y - h, h, polygon)
-        cell_queue.put((-c.max, next(counter), c))
+        cell_queue.put((-c.max, next(_counter), c))
         c = Cell(cell.x - h, cell.y + h, h, polygon)
-        cell_queue.put((-c.max, next(counter), c))
+        cell_queue.put((-c.max, next(_counter), c))
         c = Cell(cell.x + h, cell.y + h, h, polygon)
-        cell_queue.put((-c.max, next(counter), c))
+        cell_queue.put((-c.max, next(_counter), c))
         num_of_probes += 4
 
     logging.debug('num probes: %s', num_of_probes)
