@@ -1,11 +1,11 @@
 """Farpoint module."""
-from typing import Tuple
+from typing import Sequence, Tuple, Union
 import logging
 from math import sqrt, inf
 from itertools import count
 from queue import PriorityQueue
 
-from shapely.geometry import Point, LineString
+from shapely.geometry import Point, LineString, Polygon
 
 
 __version__ = 0.4
@@ -68,12 +68,14 @@ def _get_centroid_cell(polygon):
     return _Cell(x / area, y / area, 0, polygon)
 
 
-def farpoint(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, float]:
+def farpoint(*polygon: Union[Polygon, Sequence[Tuple[float, float]]],
+             precision: float = 1.0) -> Tuple[Point, float]:
     """Find pole of inaccessibility."""
-    # find bounding box
+    cell_queue: PriorityQueue[Tuple[float, int, _Cell]] = PriorityQueue()
     # _counter is used as tie breaker for the priority queue if Cells have same priority
     counter = count()
 
+    # find bounding box
     first_item = polygon[0][0]
     min_x = first_item[0]
     min_y = first_item[1]
@@ -93,8 +95,6 @@ def farpoint(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, float
     height = max_y - min_y
     cell_size = min(width, height)
     h = cell_size / 2.0
-
-    cell_queue: PriorityQueue[Tuple[float, int, _Cell]] = PriorityQueue()
 
     if cell_size == 0:
         return Point(min_x, min_y), 0
