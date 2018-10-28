@@ -4,13 +4,15 @@ import logging
 from math import sqrt, inf
 from itertools import count
 from queue import PriorityQueue
+
+import numpy as np
 from shapely.geometry import Point, LineString
+
 
 __version__ = 0.4
 
 # _counter is used as tie breaker for the priority queue if Cells have same priority
 _counter = count()
-
 
 
 def _frange(x, y, jump):
@@ -26,7 +28,7 @@ def _point_to_polygon_distance(x, y, polygon):
     Negative if point is outside.
     """
     inside = False
-    min_dist_sq = inf
+    min_dist = inf
 
     for ring in polygon:
         b = ring[-1]
@@ -36,13 +38,12 @@ def _point_to_polygon_distance(x, y, polygon):
                     (x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0])):
                 inside = not inside
 
-            min_dist_sq = min(min_dist_sq, _get_seg_dist_sq(x, y, a, b))
+            min_dist = min(min_dist, Point(x, y).distance(LineString([a, b])))
             b = a
 
-    result = sqrt(min_dist_sq)
     if not inside:
-        return -result
-    return result
+        return -min_dist
+    return min_dist
 
 
 def _get_seg_dist_sq(point: Point, segment: LineString):
@@ -50,7 +51,7 @@ def _get_seg_dist_sq(point: Point, segment: LineString):
     return segment.distance(point)
 
 
-def _get_seg_dist_sq(px, py, a, b):
+def _get_seg_dist_sq2(px, py, a, b):
     """Squared distance from point to a segment."""
     x = a[0]
     y = a[1]
@@ -101,6 +102,7 @@ def _get_centroid_cell(polygon):
 
 
 def farpoint(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, float]:
+    """Find pole of inaccessibility."""
     # find bounding box
     first_item = polygon[0][0]
     min_x = first_item[0]
