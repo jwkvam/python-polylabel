@@ -10,9 +10,6 @@ from shapely.geometry import Point, LineString
 
 __version__ = 0.4
 
-# _counter is used as tie breaker for the priority queue if Cells have same priority
-_counter = count()
-
 
 def _frange(x, y, jump):
     """range, but for floating point numbers."""
@@ -74,6 +71,9 @@ def _get_centroid_cell(polygon):
 def farpoint(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, float]:
     """Find pole of inaccessibility."""
     # find bounding box
+    # _counter is used as tie breaker for the priority queue if Cells have same priority
+    counter = count()
+
     first_item = polygon[0][0]
     min_x = first_item[0]
     min_y = first_item[1]
@@ -94,7 +94,7 @@ def farpoint(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, float
     cell_size = min(width, height)
     h = cell_size / 2.0
 
-    cell_queue = PriorityQueue()
+    cell_queue: PriorityQueue[Tuple[float, int, _Cell]] = PriorityQueue()
 
     if cell_size == 0:
         return Point(min_x, min_y), 0
@@ -103,7 +103,7 @@ def farpoint(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, float
     for x in _frange(min_x, max_x, cell_size):
         for y in _frange(min_y, max_y, cell_size):
             c = _Cell(x + h, y + h, h, polygon)
-            cell_queue.put((-c.max, next(_counter), c))
+            cell_queue.put((-c.max, next(counter), c))
 
     best_cell = _get_centroid_cell(polygon)
 
@@ -129,13 +129,13 @@ def farpoint(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, float
 
         h = cell.h / 2
         c = _Cell(cell.x - h, cell.y - h, h, polygon)
-        cell_queue.put((-c.max, next(_counter), c))
+        cell_queue.put((-c.max, next(counter), c))
         c = _Cell(cell.x + h, cell.y - h, h, polygon)
-        cell_queue.put((-c.max, next(_counter), c))
+        cell_queue.put((-c.max, next(counter), c))
         c = _Cell(cell.x - h, cell.y + h, h, polygon)
-        cell_queue.put((-c.max, next(_counter), c))
+        cell_queue.put((-c.max, next(counter), c))
         c = _Cell(cell.x + h, cell.y + h, h, polygon)
-        cell_queue.put((-c.max, next(_counter), c))
+        cell_queue.put((-c.max, next(counter), c))
         num_of_probes += 4
 
     logging.debug('num probes: %s', num_of_probes)
