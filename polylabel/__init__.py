@@ -1,3 +1,5 @@
+from typing import Tuple
+import logging
 from math import sqrt, inf
 from itertools import count
 from queue import PriorityQueue
@@ -94,7 +96,7 @@ def _get_centroid_cell(polygon):
     return Cell(x / area, y / area, 0, polygon)
 
 
-def polylabel(polygon, precision=1.0, debug=False):
+def polylabel(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, float]:
     # find bounding box
     first_item = polygon[0][0]
     min_x = first_item[0]
@@ -119,7 +121,7 @@ def polylabel(polygon, precision=1.0, debug=False):
     cell_queue = PriorityQueue()
 
     if cell_size == 0:
-        return [min_x, min_y]
+        return Point(min_x, min_y), 0
 
     # cover polygon with initial cells
     for x in frange(min_x, max_x, cell_size):
@@ -140,9 +142,11 @@ def polylabel(polygon, precision=1.0, debug=False):
         if cell.d > best_cell.d:
             best_cell = cell
 
-            if debug:
-                print('found best {} after {} probes'.format(
-                    round(1e4 * cell.d) / 1e4, num_of_probes))
+            logging.debug(
+                'found best %s after %s probes',
+                round(1e4 * cell.d) / 1e4,
+                num_of_probes
+            )
 
         if cell.max - best_cell.d <= precision:
             continue
@@ -158,8 +162,7 @@ def polylabel(polygon, precision=1.0, debug=False):
         cell_queue.put((-c.max, next(counter), c))
         num_of_probes += 4
 
-    if debug:
-        print('num probes: {}'.format(num_of_probes))
-        print('best distance: {}'.format(best_cell.d))
+    logging.debug('num probes: %s', num_of_probes)
+    logging.debug('best distance: %s', best_cell.d)
 
-    return ([best_cell.x, best_cell.y], best_cell.d)
+    return Point(best_cell.x, best_cell.y), best_cell.d
