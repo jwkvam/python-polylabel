@@ -1,4 +1,6 @@
 language: python
+cache:
+  pip: true
 dist: xenial
 python:
   - "3.6"
