@@ -13,8 +13,8 @@ _counter = count()
 
 
 
-def ffrange(x, y, jump):
-    """range, but for floating point numbers"""
+def _frange(x, y, jump):
+    """range, but for floating point numbers."""
     while x < y:
         yield x
         x += jump
@@ -22,6 +22,7 @@ def ffrange(x, y, jump):
 
 def _point_to_polygon_distance(x, y, polygon):
     """Signed distance from point to polygon outline.
+
     Negative if point is outside.
     """
     inside = False
@@ -73,7 +74,7 @@ def _get_seg_dist_sq(px, py, a, b):
     return dx * dx + dy * dy
 
 
-class Cell(object):
+class _Cell:
     def __init__(self, x, y, h, polygon):
         self.h = h
         self.y = y
@@ -95,11 +96,11 @@ def _get_centroid_cell(polygon):
         area += f * 3
         b = a
     if area == 0:
-        return Cell(points[0][0], points[0][1], 0, polygon)
-    return Cell(x / area, y / area, 0, polygon)
+        return _Cell(points[0][0], points[0][1], 0, polygon)
+    return _Cell(x / area, y / area, 0, polygon)
 
 
-def polylabel(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, float]:
+def farpoint(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, float]:
     # find bounding box
     first_item = polygon[0][0]
     min_x = first_item[0]
@@ -127,14 +128,14 @@ def polylabel(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, floa
         return Point(min_x, min_y), 0
 
     # cover polygon with initial cells
-    for x in ffrange(min_x, max_x, cell_size):
-        for y in ffrange(min_y, max_y, cell_size):
-            c = Cell(x + h, y + h, h, polygon)
+    for x in _frange(min_x, max_x, cell_size):
+        for y in _frange(min_y, max_y, cell_size):
+            c = _Cell(x + h, y + h, h, polygon)
             cell_queue.put((-c.max, next(_counter), c))
 
     best_cell = _get_centroid_cell(polygon)
 
-    bbox_cell = Cell(min_x + width / 2, min_y + height / 2, 0, polygon)
+    bbox_cell = _Cell(min_x + width / 2, min_y + height / 2, 0, polygon)
     if bbox_cell.d > best_cell.d:
         best_cell = bbox_cell
 
@@ -155,13 +156,13 @@ def polylabel(polygon, precision: float = 1.0, debug=False) -> Tuple[Point, floa
             continue
 
         h = cell.h / 2
-        c = Cell(cell.x - h, cell.y - h, h, polygon)
+        c = _Cell(cell.x - h, cell.y - h, h, polygon)
         cell_queue.put((-c.max, next(_counter), c))
-        c = Cell(cell.x + h, cell.y - h, h, polygon)
+        c = _Cell(cell.x + h, cell.y - h, h, polygon)
         cell_queue.put((-c.max, next(_counter), c))
-        c = Cell(cell.x - h, cell.y + h, h, polygon)
+        c = _Cell(cell.x - h, cell.y + h, h, polygon)
         cell_queue.put((-c.max, next(_counter), c))
-        c = Cell(cell.x + h, cell.y + h, h, polygon)
+        c = _Cell(cell.x + h, cell.y + h, h, polygon)
         cell_queue.put((-c.max, next(_counter), c))
         num_of_probes += 4
 

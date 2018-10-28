@@ -24,8 +24,8 @@ def find_version(*file_paths):
 
 
 setup(
-    name="python-polylabel",
-    version=find_version('polylabel', '__init__.py'),
+    name='farpoint',
+    version=find_version('farpoint.py'),
     author='Michal Hatak',
     author_email='me@twista.cz',
     packages=find_packages(),
