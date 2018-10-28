@@ -1,4 +1,7 @@
 """Packaging code."""
+import os
+import re
+import codecs
 from setuptools import setup, find_packages
 
 
