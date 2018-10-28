@@ -1,4 +1,8 @@
 mypy
+pylint
 pytest
+pytest-codestyle
+pytest-docstyle
 pytest-mypy
+pytest-pylint
 shapely
