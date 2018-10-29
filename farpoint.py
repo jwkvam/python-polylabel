@@ -25,20 +25,12 @@ class _Cell:
     def __eq__(self, other):
         if not isinstance(other, _Cell):
             raise TypeError(f'{other} is not of type _Cell')
-        return (self.x == other.x
-                and self.y == other.y
-                and self.h == other.h)
+        return (self.x, self.y, self.h) == (other.x, other.y, other.h)
 
     def __lt__(self, other):
         if not isinstance(other, _Cell):
             raise TypeError(f'{other} is not of type _Cell')
-        if self.x < other.x:
-            return True
-        if self.y < other.y:
-            return True
-        if self.h < other.h:
-            return True
-        return False
+        return (self.x, self.y, self.h) < (other.x, other.y, other.h)
 
 
 def _frange(x, y, jump):
