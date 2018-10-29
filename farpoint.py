@@ -2,7 +2,7 @@
 from typing import Sequence, Tuple, Union
 import logging
 from math import sqrt, inf
-from itertools import count
+from itertools import count, product
 from queue import PriorityQueue
 
 from shapely.geometry import Point, LineString, Polygon
@@ -71,7 +71,7 @@ def _get_centroid_cell(polygon):
 def farpoint(*polygon: Union[Polygon, Sequence[Tuple[float, float]]],
              precision: float = 1.0) -> Tuple[Point, float]:
     """Find pole of inaccessibility."""
-    cell_queue: PriorityQueue[Tuple[float, int, _Cell]] = PriorityQueue()
+    cell_queue: PriorityQueue[Tuple[float, int, _Cell]] = PriorityQueue()  # pylint: disable=unsubscriptable-object
     # _counter is used as tie breaker for the priority queue if Cells have same priority
     counter = count()
 
@@ -111,9 +111,9 @@ def farpoint(*polygon: Union[Polygon, Sequence[Tuple[float, float]]],
     if bbox_cell.d > best_cell.d:
         best_cell = bbox_cell
 
-    num_of_probes = cell_queue.qsize()
+    probes = cell_queue.qsize()
     while not cell_queue.empty():
-        _, __, cell = cell_queue.get()
+        *_, cell = cell_queue.get()
 
         if cell.d > best_cell.d:
             best_cell = cell
@@ -121,24 +121,19 @@ def farpoint(*polygon: Union[Polygon, Sequence[Tuple[float, float]]],
             logging.debug(
                 'found best %s after %s probes',
                 round(1e4 * cell.d) / 1e4,
-                num_of_probes
+                probes
             )
 
         if cell.max - best_cell.d <= precision:
             continue
 
         h = cell.h / 2
-        c = _Cell(cell.x - h, cell.y - h, h, polygon)
-        cell_queue.put((-c.max, next(counter), c))
-        c = _Cell(cell.x + h, cell.y - h, h, polygon)
-        cell_queue.put((-c.max, next(counter), c))
-        c = _Cell(cell.x - h, cell.y + h, h, polygon)
-        cell_queue.put((-c.max, next(counter), c))
-        c = _Cell(cell.x + h, cell.y + h, h, polygon)
-        cell_queue.put((-c.max, next(counter), c))
-        num_of_probes += 4
+        for mx, my in product((-h, h), repeat=2):
+            c = _Cell(cell.x + mx, cell.y + my, h, polygon)
+            cell_queue.put((-c.max, next(counter), c))
+            probes += 1
 
-    logging.debug('num probes: %s', num_of_probes)
+    logging.debug('number of probes: %s', probes)
     logging.debug('best distance: %s', best_cell.d)
 
     return Point(best_cell.x, best_cell.y), best_cell.d
