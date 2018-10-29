@@ -11,6 +11,36 @@ from shapely.geometry import Point, LineString, Polygon
 __version__ = 0.4
 
 
+class _Cell:
+    def __init__(self, x, y, h, polygon):
+        self.h = h
+        self.y = y
+        self.x = x
+        self.d = _point_to_polygon_distance(x, y, polygon)
+
+    @property
+    def max(self):
+        return self.d + self.h * sqrt(2)
+
+    def __eq__(self, other):
+        if not isinstance(other, _Cell):
+            raise TypeError(f'{other} is not of type _Cell')
+        return (self.x == other.x
+                and self.y == other.y
+                and self.h == other.h)
+
+    def __lt__(self, other):
+        if not isinstance(other, _Cell):
+            raise TypeError(f'{other} is not of type _Cell')
+        if self.x < other.x:
+            return True
+        if self.y < other.y:
+            return True
+        if self.h < other.h:
+            return True
+        return False
+
+
 def _frange(x, y, jump):
     """range, but for floating point numbers."""
     while x < y:
@@ -42,15 +72,6 @@ def _point_to_polygon_distance(x, y, polygon):
     return min_dist
 
 
-class _Cell:
-    def __init__(self, x, y, h, polygon):
-        self.h = h
-        self.y = y
-        self.x = x
-        self.d = _point_to_polygon_distance(x, y, polygon)
-        self.max = self.d + self.h * sqrt(2)
-
-
 def _get_centroid_cell(polygon):
     area = 0
     x = 0
@@ -71,9 +92,8 @@ def _get_centroid_cell(polygon):
 def farpoint(*polygon: Union[Polygon, Sequence[Tuple[float, float]]],
              precision: float = 1.0) -> Tuple[Point, float]:
     """Find pole of inaccessibility."""
-    cell_queue: PriorityQueue[Tuple[float, int, _Cell]] = PriorityQueue()  # pylint: disable=unsubscriptable-object
-    # _counter is used as tie breaker for the priority queue if Cells have same priority
-    counter = count()
+    cell_queue: PriorityQueue[Tuple[float, _Cell]] \
+        = PriorityQueue()  # pylint: disable=unsubscriptable-object
 
     # find bounding box
     first_item = polygon[0][0]
@@ -103,7 +123,7 @@ def farpoint(*polygon: Union[Polygon, Sequence[Tuple[float, float]]],
     for x in _frange(min_x, max_x, cell_size):
         for y in _frange(min_y, max_y, cell_size):
             c = _Cell(x + h, y + h, h, polygon)
-            cell_queue.put((-c.max, next(counter), c))
+            cell_queue.put((-c.max, c))
 
     best_cell = _get_centroid_cell(polygon)
 
@@ -130,7 +150,7 @@ def farpoint(*polygon: Union[Polygon, Sequence[Tuple[float, float]]],
         h = cell.h / 2
         for mx, my in product((-h, h), repeat=2):
             c = _Cell(cell.x + mx, cell.y + my, h, polygon)
-            cell_queue.put((-c.max, next(counter), c))
+            cell_queue.put((-c.max, c))
             probes += 1
 
     logging.debug('number of probes: %s', probes)
